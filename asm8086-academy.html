@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASM 8086 Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans+Hebrew:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c0f;
+  --bg2: #0f1318;
+  --bg3: #141920;
+  --panel: #111720;
+  --border: #1e2d3d;
+  --border2: #243447;
+  --green: #00ff88;
+  --green2: #00cc6a;
+  --amber: #ffb700;
+  --amber2: #ff8c00;
+  --cyan: #00d4ff;
+  --red: #ff4444;
+  --purple: #a855f7;
+  --text: #c8d8e8;
+  --text2: #8899aa;
+  --text3: #556677;
+  --glow: 0 0 20px rgba(0,255,136,0.3);
+  --glow-amber: 0 0 20px rgba(255,183,0,0.3);
+  --glow-cyan: 0 0 20px rgba(0,212,255,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans Hebrew', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCANLINE EFFECT */
+body::before {
+  content:'';
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* GRID BACKGROUND */
+body::after {
+  content:'';
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background-image: linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* HEADER */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,12,15,0.95);
+  border-bottom: 1px solid var(--border2);
+  backdrop-filter: blur(20px);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 12px; font-weight: 900;
+  color: var(--bg);
+  animation: pulse-icon 3s ease-in-out infinite;
+}
+@keyframes pulse-icon {
+  0%,100%{box-shadow:0 0 0 rgba(0,255,136,0)}
+  50%{box-shadow:0 0 20px rgba(0,255,136,0.5)}
+}
+.logo-text {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px; font-weight: 900;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+.logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 3px; font-family:'Share Tech Mono',monospace; }
+
+.header-right { display:flex; align-items:center; gap:16px; }
+.progress-pill {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--green);
+}
+.progress-pill span { color: var(--text2); }
+.btn-start {
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  color: var(--bg);
+  border: none; cursor: pointer;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+}
+.btn-start:hover { transform: translateY(-1px); box-shadow: var(--glow); }
+
+/* LAYOUT */
+.app { position:relative; z-index:1; }
+
+/* HERO */
+.hero {
+  padding: 60px 40px 40px;
+  text-align: center;
+  position: relative;
+}
+.hero-badge {
+  display: inline-block;
+  background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 4px 16px;
+  border-radius: 20px;
+  letter-spacing: 3px;
+  margin-bottom: 24px;
+}
+.hero h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.hero h1 .line1 { color: var(--text); display:block; }
+.hero h1 .line2 {
+  background: linear-gradient(90deg, var(--green), var(--amber), var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  display:block;
+}
+.hero-desc {
+  color: var(--text2);
+  max-width: 560px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  font-size: 16px;
+}
+.hero-stats {
+  display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;
+}
+.stat { text-align: center; }
+.stat-num {
+  font-family: 'Orbitron', monospace;
+  font-size: 28px; font-weight: 900;
+  color: var(--green);
+  display: block;
+  text-shadow: 0 0 20px rgba(0,255,136,0.5);
+}
+.stat-label { font-size: 12px; color: var(--text3); letter-spacing: 2px; }
+
+/* MAIN LAYOUT */
+.main-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  min-height: calc(100vh - 160px);
+  border-top: 1px solid var(--border);
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  padding: 24px 0;
+  position: sticky; top: 60px; height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-heading {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 3px;
+  padding: 4px 20px 8px;
+  text-transform: uppercase;
+}
+.module-btn {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 10px 20px;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text2);
+  text-align: right;
+  transition: all 0.2s;
+  border-right: 2px solid transparent;
+  position: relative;
+}
+.module-btn:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+.module-btn.active {
+  background: rgba(0,255,136,0.08);
+  color: var(--green);
+  border-right-color: var(--green);
+}
+.module-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  width: 28px;
+  flex-shrink: 0;
+}
+.module-btn.active .module-num { color: var(--green2); }
+.module-title { font-size: 13px; font-weight: 600; line-height: 1.3; flex: 1; }
+.module-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.badge-done { background: rgba(0,255,136,0.15); color: var(--green); }
+.badge-lock { background: rgba(255,255,255,0.05); color: var(--text3); }
+.badge-new { background: rgba(255,183,0,0.15); color: var(--amber); }
+
+/* CONTENT AREA */
+.content {
+  background: var(--bg);
+  min-height: calc(100vh - 60px);
+}
+
+/* TABS */
+.content-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  padding: 0 32px;
+}
+.tab-btn {
+  background: transparent; border: none; cursor: pointer;
+  padding: 14px 20px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text3);
+  border-bottom: 2px solid transparent;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* CONTENT PANELS */
+.content-panel { display: none; padding: 32px; }
+.content-panel.active { display: block; }
+
+/* THEORY PANEL */
+.module-header { margin-bottom: 32px; }
+.module-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--cyan);
+  letter-spacing: 3px; margin-bottom: 8px;
+}
+.module-header h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 24px; font-weight: 900;
+  color: var(--text); margin-bottom: 8px;
+}
+.module-header p { color: var(--text2); line-height: 1.6; font-size: 14px; }
+
+/* CONTENT CARDS */
+.lesson-cards { display: flex; flex-direction: column; gap: 20px; }
+.lesson-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.lesson-card:hover { border-color: var(--border2); }
+.card-header {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+}
+.card-icon {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.icon-green { background: rgba(0,255,136,0.1); }
+.icon-amber { background: rgba(255,183,0,0.1); }
+.icon-cyan { background: rgba(0,212,255,0.1); }
+.icon-purple { background: rgba(168,85,247,0.1); }
+.card-title { font-weight: 600; font-size: 14px; color: var(--text); flex: 1; }
+.card-arrow { color: var(--text3); font-size: 12px; transition: transform 0.2s; }
+.lesson-card.open .card-arrow { transform: rotate(180deg); }
+.card-body { padding: 20px; display: none; }
+.lesson-card.open .card-body { display: block; }
+.card-body p { color: var(--text2); line-height: 1.8; font-size: 14px; margin-bottom: 12px; }
+
+/* CODE BLOCK */
+.code-block {
+  background: #060a0e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 12px 0;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  position: relative;
+}
+.code-block::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 8px; left: 12px;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 2px;
+}
+.code-block.labeled { padding-top: 28px; }
+.kw { color: var(--cyan); }
+.reg { color: var(--green); }
+.num { color: var(--amber); }
+.cmt { color: var(--text3); }
+.lbl { color: var(--purple); }
+.str { color: #ff9966; }
+
+/* REGISTER DISPLAY */
+.registers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+.reg-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reg-box:hover { border-color: var(--green); box-shadow: 0 0 10px rgba(0,255,136,0.1); }
+.reg-box.active { border-color: var(--green); background: rgba(0,255,136,0.05); }
+.reg-box.changed { border-color: var(--amber); background: rgba(255,183,0,0.05); animation: reg-flash 0.3s ease; }
+@keyframes reg-flash {
+  0% { background: rgba(255,183,0,0.3); }
+  100% { background: rgba(255,183,0,0.05); }
+}
+.reg-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 2px; margin-bottom: 6px;
+}
+.reg-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px; font-weight: bold;
+  color: var(--green);
+}
+.reg-desc { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+/* FLAGS */
+.flags-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin: 16px 0;
+}
+.flag-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 54px;
+  transition: all 0.2s;
+}
+.flag-box.set {
+  border-color: var(--green);
+  background: rgba(0,255,136,0.1);
+}
+.flag-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; margin-bottom: 4px;
+}
+.flag-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px; font-weight: 900;
+  color: var(--text3);
+}
+.flag-box.set .flag-val { color: var(--green); }
+
+/* SIMULATOR PANEL */
+.sim-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+.sim-editor {
+  background: #060a0e;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sim-editor-header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sim-editor-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 2px;
+}
+.sim-controls { display: flex; gap: 8px; }
+.sim-btn {
+  padding: 5px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.sim-btn.green { color: var(--green); border-color: rgba(0,255,136,0.3); }
+.sim-btn.amber { color: var(--amber); border-color: rgba(255,183,0,0.3); }
+.sim-btn.red { color: var(--red); border-color: rgba(255,68,68,0.3); }
+.sim-btn:hover { background: rgba(255,255,255,0.05); transform: translateY(-1px); }
+.sim-btn:active { transform: translateY(0); }
+
+#code-editor {
+  width: 100%; min-height: 280px;
+  background: transparent;
+  color: var(--green);
+  border: none; outline: none; resize: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  padding: 16px;
+  direction: ltr;
+  text-align: left;
+}
+
+.sim-output {
+  background: #060a0e;
+  border: 1px solid var(--border);
+  border-top: none;
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  min-height: 80px;
+  max-height: 120px;
+  overflow-y: auto;
+  color: var(--text2);
+}
+.out-line { padding: 2px 0; }
+.out-line.ok { color: var(--green); }
+.out-line.err { color: var(--red); }
+.out-line.info { color: var(--cyan); }
+
+.sim-right {}
+.sim-regs {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.sim-panel-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 3px;
+}
+.sim-reg-grid {
+  padding: 12px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.sim-reg-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+}
+.sim-reg-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; color: var(--text3);
+}
+.sim-reg-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; color: var(--green);
+  transition: color 0.2s;
+}
+.sim-reg-row.changed .sim-reg-val { color: var(--amber); }
+
+.sim-flags {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.sim-flags-grid {
+  padding: 12px;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.sim-flag {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 4px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.sim-flag.on {
+  border-color: var(--green);
+  background: rgba(0,255,136,0.08);
+}
+.sim-flag-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: var(--text3);
+}
+.sim-flag-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px; font-weight: 900;
+  color: var(--text3);
+}
+.sim-flag.on .sim-flag-val { color: var(--green); }
+
+/* MEMORY DISPLAY */
+.memory-grid {
+  display: grid;
+  grid-template-columns: auto repeat(8, 1fr);
+  gap: 2px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+}
+.mem-addr { color: var(--text3); padding: 3px 6px; }
+.mem-cell {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 4px 2px;
+  text-align: center;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mem-cell:hover { border-color: var(--cyan); color: var(--cyan); }
+.mem-cell.highlighted { border-color: var(--amber); background: rgba(255,183,0,0.1); color: var(--amber); }
+
+/* QUIZ PANEL */
+.quiz-container { max-width: 600px; }
+.quiz-progress {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px;
+}
+.quiz-bar {
+  flex: 1; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.quiz-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+  transition: width 0.4s ease;
+}
+.quiz-count {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; color: var(--text3);
+}
+.question-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.question-type {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--cyan);
+  letter-spacing: 2px; margin-bottom: 12px;
+}
+.question-text {
+  font-size: 16px; font-weight: 600;
+  color: var(--text); line-height: 1.6;
+  margin-bottom: 20px;
+}
+.question-code {
+  background: #060a0e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  direction: ltr; text-align: left;
+  margin-bottom: 20px;
+  color: var(--green);
+}
+.options-grid { display: flex; flex-direction: column; gap: 8px; }
+.option-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+  font-size: 14px;
+  text-align: right;
+  direction: rtl;
+}
+.option-btn:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+.option-btn.correct { border-color: var(--green); background: rgba(0,255,136,0.1); color: var(--green); }
+.option-btn.wrong { border-color: var(--red); background: rgba(255,68,68,0.08); color: var(--red); }
+.option-letter {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; color: var(--text3);
+  flex-shrink: 0;
+}
+.quiz-result {
+  background: var(--panel);
+  border-radius: 10px; padding: 32px;
+  text-align: center; display: none;
+}
+.result-score {
+  font-family: 'Orbitron', monospace;
+  font-size: 56px; font-weight: 900;
+  color: var(--green);
+  text-shadow: 0 0 30px rgba(0,255,136,0.5);
+  margin-bottom: 8px;
+}
+.result-label { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+.btn-retry {
+  background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: var(--green);
+  padding: 10px 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; letter-spacing: 2px;
+  transition: all 0.2s;
+}
+.btn-retry:hover { background: rgba(0,255,136,0.2); }
+
+/* ARCH DIAGRAM */
+.arch-diagram {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin: 20px 0;
+  position: relative;
+  min-height: 300px;
+}
+.cpu-box {
+  border: 2px solid var(--border2);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255,255,255,0.02);
+  text-align: center;
+  position: relative;
+}
+.cpu-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 2px; margin-bottom: 12px;
+}
+.arch-split {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.arch-unit {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--panel);
+}
+.unit-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 12px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.unit-eu { color: var(--green); border-color: rgba(0,255,136,0.2); }
+.unit-biu { color: var(--cyan); border-color: rgba(0,212,255,0.2); }
+.unit-item {
+  font-size: 12px; color: var(--text2);
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.data-bus {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin: 16px 0;
+  position: relative;
+}
+.bus-line {
+  flex: 1; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  animation: bus-flow 2s linear infinite;
+}
+@keyframes bus-flow {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+.bus-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: var(--amber);
+  letter-spacing: 2px; padding: 3px 8px;
+  border: 1px solid rgba(255,183,0,0.3);
+  border-radius: 3px;
+}
+
+/* INFO PILLS */
+.info-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: 'Share Tech Mono', monospace;
+}
+.pill-green { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+.pill-amber { background: rgba(255,183,0,0.1); color: var(--amber); border: 1px solid rgba(255,183,0,0.2); }
+.pill-cyan { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.2); }
+.pill-red { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+
+/* TABLE */
+.asm-table {
+  width: 100%; border-collapse: collapse; margin: 16px 0;
+  font-size: 13px; direction: ltr; text-align: left;
+}
+.asm-table th {
+  background: var(--bg3); padding: 8px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--text3); border: 1px solid var(--border);
+}
+.asm-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: top;
+}
+.asm-table tr:hover td { background: rgba(255,255,255,0.02); }
+.asm-table .td-inst { color: var(--cyan); font-family: 'Share Tech Mono', monospace; }
+.asm-table .td-desc { color: var(--text2); }
+
+/* STEP INDICATOR */
+.steps-list { display: flex; flex-direction: column; gap: 0; margin: 16px 0; }
+.step-item {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.step-num {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px; color: var(--text3);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-item.done .step-num { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.08); }
+.step-body {}
+.step-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .registers-grid { grid-template-columns: repeat(2, 1fr); }
+  .sim-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .hero { padding: 30px 20px; }
+  .content-panel { padding: 20px; }
+}
+
+/* ANIMATED ENTRY */
+.fade-in { animation: fadeUp 0.4s ease forwards; opacity: 0; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">8086</div>
+    <div>
+      <div class="logo-text">ASM ACADEMY</div>
+      <div class="logo-sub">Intel 8086 / 8088</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="progress-pill"><span>התקדמות: </span>מודול 2 מתוך 12</div>
+    <button class="btn-start">התחל לימוד</button>
+  </div>
+</header>
+
+<div class="app">
+  <div class="hero fade-in">
+    <div class="hero-badge">⬡ קורס מקצועי מלא</div>
+    <h1>
+      <span class="line1">לימוד שפת סף</span>
+      <span class="line2">Intel 8086 / 8088</span>
+    </h1>
+    <p class="hero-desc">קורס אינטראקטיבי מלא לתכנות Assembly, עם סימולטור מובנה, תרגילים, בחינות ולמידה שלב-אחר-שלב.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">12</span><span class="stat-label">מודולים</span></div>
+      <div class="stat"><span class="stat-num">80+</span><span class="stat-label">שיעורים</span></div>
+      <div class="stat"><span class="stat-num">200+</span><span class="stat-label">תרגילים</span></div>
+      <div class="stat"><span class="stat-num">מלא</span><span class="stat-label">סימולטור</span></div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-heading">מודולי לימוד</div>
+        <button class="module-btn" onclick="selectModule(0)">
+          <span class="module-num">01</span>
+          <span class="module-title">מבוא לשפת סף</span>
+          <span class="module-badge badge-done">✓</span>
+        </button>
+        <button class="module-btn active" onclick="selectModule(1)">
+          <span class="module-num">02</span>
+          <span class="module-title">ארכיטקטורת 8086/8088</span>
+          <span class="module-badge badge-new">NEW</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(2)">
+          <span class="module-num">03</span>
+          <span class="module-title">הוראות בסיסיות</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(3)">
+          <span class="module-num">04</span>
+          <span class="module-title">סגמנטציה וזיכרון</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(4)">
+          <span class="module-num">05</span>
+          <span class="module-title">מבנה שפת אסמבלר</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(5)">
+          <span class="module-num">06</span>
+          <span class="module-title">הוראות מתקדמות</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(6)">
+          <span class="module-num">07</span>
+          <span class="module-title">הרצה וניפוי שגיאות</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(7)">
+          <span class="module-num">08</span>
+          <span class="module-title">שיטות מיעון</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(8)">
+          <span class="module-num">09</span>
+          <span class="module-title">פרוצדורות ומחסנית</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(9)">
+          <span class="module-num">10</span>
+          <span class="module-title">פעולות לוגיות</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(10)">
+          <span class="module-num">11</span>
+          <span class="module-title">תכנות מתקדם</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+        <button class="module-btn" onclick="selectModule(11)">
+          <span class="module-num">12</span>
+          <span class="module-title">פעולות על מחרוזות</span>
+          <span class="module-badge badge-new">פתוח</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <div class="content-tabs">
+        <button class="tab-btn active" onclick="switchTab('theory')">📖 תיאוריה</button>
+        <button class="tab-btn" onclick="switchTab('sim')">⚙️ סימולטור</button>
+        <button class="tab-btn" onclick="switchTab('memory')">🧠 זיכרון</button>
+        <button class="tab-btn" onclick="switchTab('quiz')">✏️ חידון</button>
+      </div>
+
+      <!-- THEORY -->
+      <div id="tab-theory" class="content-panel active">
+        <div class="module-header">
+          <div class="module-tag">מודול 02 · ארכיטקטורה</div>
+          <h2>ארכיטקטורת Intel 8086/8088</h2>
+          <p>הבנת מבנה המעבד, יחידות הפנימיות, האוגרים והאוטובוסים — הבסיס להבנת כל הוראת Assembly.</p>
+        </div>
+
+        <div class="lesson-cards">
+
+          <!-- LESSON 1 -->
+          <div class="lesson-card open">
+            <div class="card-header" onclick="toggleCard(this)">
+              <div class="card-icon icon-green">🏗</div>
+              <div class="card-title">מבנה כללי של המעבד</div>
+              <div class="card-arrow">▼</div>
+            </div>
+            <div class="card-body">
+              <p>המעבד Intel 8086 מורכב משתי יחידות עיקריות הפועלות במקביל:</p>
+              <div class="arch-diagram">
+                <div class="cpu-box">
+                  <div class="cpu-label">Intel 8086 CPU</div>
+                  <div class="arch-split">
+                    <div class="arch-unit unit-eu">
+                      <div class="unit-title">EU – Execution Unit</div>
+                      <div class="unit-item">ALU (יחידת חישוב)</div>
+                      <div class="unit-item">אוגרים כלליים</div>
+                      <div class="unit-item">PSW – דגלים</div>
+                      <div class="unit-item">בקר הוראות</div>
+                    </div>
+                    <div class="arch-unit unit-biu">
+                      <div class="unit-title">BIU – Bus Interface Unit</div>
+                      <div class="unit-item">תור הוראות (6 בתים)</div>
+                      <div class="unit-item">אוגרי סגמנט</div>
+                      <div class="unit-item">מחשב כתובת</div>
+                      <div class="unit-item">בקר אוטובוס</div>
+                    </div>
+                  </div>
+                  <div class="data-bus">
+                    <div class="bus-line"></div>
+                    <div class="bus-label">16-bit Data Bus</div>
+                    <div class="bus-line"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="info-pills">
+                <span class="pill pill-green">EU עובד על הוראות</span>
+                <span class="pill pill-cyan">BIU מביא הוראות מהזיכרון</span>
+                <span class="pill pill-amber">Pipeline בסיסי</span>
+              </div>
+              <p>ה-EU מבצע הוראות בזמן שה-BIU שולף הוראות עתידיות (Pre-Fetch). כך המעבד עובד ביעילות גבוהה יותר.</p>
+            </div>
+          </div>
+
+          <!-- LESSON 2: REGISTERS -->
+          <div class="lesson-card">
+            <div class="card-header" onclick="toggleCard(this)">
+              <div class="card-icon icon-amber">🗄</div>
+              <div class="card-title">האוגרים – Registers</div>
+              <div class="card-arrow">▼</div>
+            </div>
+            <div class="card-body">
+              <p>ל-8086 יש 14 אוגרים של 16 סיביות. לחץ על אוגר לפרטים:</p>
+              <div class="registers-grid" id="regs-display">
+                <div class="reg-box" onclick="showRegInfo('AX')">
+                  <div class="reg-name">AX</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Accumulator</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('BX')">
+                  <div class="reg-name">BX</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Base</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('CX')">
+                  <div class="reg-name">CX</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Counter</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('DX')">
+                  <div class="reg-name">DX</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Data</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('SI')">
+                  <div class="reg-name">SI</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Source Index</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('DI')">
+                  <div class="reg-name">DI</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Dest Index</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('SP')">
+                  <div class="reg-name">SP</div>
+                  <div class="reg-value">FFFFh</div>
+                  <div class="reg-desc">Stack Pointer</div>
+                </div>
+                <div class="reg-box" onclick="showRegInfo('BP')">
+                  <div class="reg-name">BP</div>
+                  <div class="reg-value">0000h</div>
+                  <div class="reg-desc">Base Pointer</div>
+                </div>
+              </div>
+              <p id="reg-info-text" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:13px;color:var(--amber);margin-top:8px;display:none;"></p>
+
+              <p style="margin-top:16px">האוגרים הכלליים <strong style="color:var(--green)">AX, BX, CX, DX</strong> ניתנים לחלוקה לשני חלקים של 8 סיביות:</p>
+              <div class="code-block">
+<span class="cmt">; AX = AH (ביטים 15-8) + AL (ביטים 7-0)</span>
+<span class="kw">MOV</span> <span class="reg">AX</span>, <span class="num">1234h</span>    <span class="cmt">; AH=12h, AL=34h</span>
+<span class="kw">MOV</span> <span class="reg">AH</span>, <span class="num">0FFh</span>    <span class="cmt">; רק החלק הגבוה</span>
+<span class="kw">MOV</span> <span class="reg">AL</span>, <span class="num">00h</span>     <span class="cmt">; רק החלק הנמוך</span></div>
+            </div>
+          </div>
+
+          <!-- LESSON 3: FLAGS -->
+          <div class="lesson-card">
+            <div class="card-header" onclick="toggleCard(this)">
+              <div class="card-icon icon-cyan">🚩</div>
+              <div class="card-title">רגיסטר הדגלים – PSW / Flags</div>
+              <div class="card-arrow">▼</div>
+            </div>
+            <div class="card-body">
+              <p>רגיסטר הדגלים (Flags / PSW) הוא אוגר 16-סיביות שכל ביט משקף מצב של פעולה אחרונה:</p>
+              <div class="flags-row" id="flags-display">
+                <div class="flag-box" onclick="toggleFlag(this,'CF')">
+                  <div class="flag-name">CF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'PF')">
+                  <div class="flag-name">PF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'AF')">
+                  <div class="flag-name">AF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box set" onclick="toggleFlag(this,'ZF')">
+                  <div class="flag-name">ZF</div>
+                  <div class="flag-val">1</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'SF')">
+                  <div class="flag-name">SF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'TF')">
+                  <div class="flag-name">TF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box set" onclick="toggleFlag(this,'IF')">
+                  <div class="flag-name">IF</div>
+                  <div class="flag-val">1</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'DF')">
+                  <div class="flag-name">DF</div>
+                  <div class="flag-val">0</div>
+                </div>
+                <div class="flag-box" onclick="toggleFlag(this,'OF')">
+                  <div class="flag-name">OF</div>
+                  <div class="flag-val">0</div>
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--text3);margin-bottom:12px">לחץ על דגל לשינוי מצבו</p>
+              <table class="asm-table">
+                <tr><th>דגל</th><th>שם מלא</th><th>תיאור</th></tr>
+                <tr><td class="td-inst">CF</td><td>Carry Flag</td><td class="td-desc">נסיעה / הלוואה בפעולות חשבון</td></tr>
+                <tr><td class="td-inst">ZF</td><td>Zero Flag</td><td class="td-desc">התוצאה שווה לאפס</td></tr>
+                <tr><td class="td-inst">SF</td><td>Sign Flag</td><td class="td-desc">התוצאה שלילית (ביט MSB=1)</td></tr>
+                <tr><td class="td-inst">OF</td><td>Overflow Flag</td><td class="td-desc">הצפה בפעולות מספרים מסומנים</td></tr>
+                <tr><td class="td-inst">IF</td><td>Interrupt Flag</td><td class="td-desc">מאפשר פסיקות חיצוניות</td></tr>
+                <tr><td class="td-inst">DF</td><td>Direction Flag</td><td class="td-desc">כיוון פעולות מחרוזת (CLD/STD)</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- LESSON 4: 8086 vs 8088 -->
+          <div class="lesson-card">
+            <div class="card-header" onclick="toggleCard(this)">
+              <div class="card-icon icon-purple">⚡</div>
+              <div class="card-title">הבדלים: 8086 לעומת 8088</div>
+              <div class="card-arrow">▼</div>
+            </div>
+            <div class="card-body">
+              <table class="asm-table">
+                <tr><th>מאפיין</th><th>8086</th><th>8088</th></tr>
+                <tr><td>Data Bus חיצוני</td><td class="td-inst">16-bit</td><td class="td-inst">8-bit</td></tr>
+                <tr><td>Address Bus</td><td class="td-inst">20-bit</td><td class="td-inst">20-bit</td></tr>
+                <tr><td>תור הוראות</td><td class="td-inst">6 bytes</td><td class="td-inst">4 bytes</td></tr>
+                <tr><td>מהירות קריאה</td><td class="td-inst">מהיר יותר</td><td class="td-inst">איטי יותר</td></tr>
+                <tr><td>שימוש ב-IBM PC</td><td class="td-inst">לא</td><td class="td-inst">IBM PC מקורי</td></tr>
+              </table>
+              <p>למרות ההבדלים, <strong style="color:var(--cyan)">קוד Assembly זהה לשניהם</strong> — ההבדל הוא פיזי בלבד (בעיקר ברוחב אוטובוס הנתונים).</p>
+              <div class="info-pills">
+                <span class="pill pill-green">תואמות ב-100% ברמת תוכנה</span>
+                <span class="pill pill-amber">8088 זול יותר לייצור</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /lesson-cards -->
+      </div>
+
+      <!-- SIMULATOR -->
+      <div id="tab-sim" class="content-panel">
+        <div class="module-header">
+          <div class="module-tag">סימולטור · 8086</div>
+          <h2>סימולטור Assembly</h2>
+          <p>כתוב קוד, הרץ שלב אחר שלב וראה שינויים באוגרים ודגלים בזמן אמת.</p>
+        </div>
+
+        <div class="sim-layout">
+          <div>
+            <div class="sim-editor">
+              <div class="sim-editor-header">
+                <span class="sim-editor-title">EDITOR · ASM SOURCE</span>
+                <div class="sim-controls">
+                  <button class="sim-btn green" onclick="runSim()">▶ הרץ</button>
+                  <button class="sim-btn amber" onclick="stepSim()">⏭ צעד</button>
+                  <button class="sim-btn red" onclick="resetSim()">↺ אתחל</button>
+                </div>
+              </div>
+              <textarea id="code-editor" spellcheck="false">; דוגמה: חיבור שני מספרים
+; ==============================
+.MODEL SMALL
+.STACK 100h
+
+.DATA
+  NUM1  DW  25h
+  NUM2  DW  13h
+  SUM   DW  ?
+
+.CODE
+START:
+  MOV AX, @DATA
+  MOV DS, AX
+
+  MOV AX, NUM1    ; AX = 25h
+  ADD AX, NUM2    ; AX = AX + 13h = 38h
+  MOV SUM, AX     ; שמור תוצאה
+
+  MOV AH, 4Ch
+  INT 21h
+END START</textarea>
+              <div class="sim-output" id="sim-output">
+                <div class="out-line info">&gt; מוכן. לחץ "הרץ" להרצת הקוד.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sim-right">
+            <div class="sim-regs">
+              <div class="sim-panel-header">REGISTERS</div>
+              <div class="sim-reg-grid">
+                <div class="sim-reg-row" id="sreg-AX"><span class="sim-reg-name">AX</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-BX"><span class="sim-reg-name">BX</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-CX"><span class="sim-reg-name">CX</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-DX"><span class="sim-reg-name">DX</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-SI"><span class="sim-reg-name">SI</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-DI"><span class="sim-reg-name">DI</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-SP"><span class="sim-reg-name">SP</span><span class="sim-reg-val">FFFF</span></div>
+                <div class="sim-reg-row" id="sreg-BP"><span class="sim-reg-name">BP</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-IP"><span class="sim-reg-name">IP</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-DS"><span class="sim-reg-name">DS</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-CS"><span class="sim-reg-name">CS</span><span class="sim-reg-val">0000</span></div>
+                <div class="sim-reg-row" id="sreg-SS"><span class="sim-reg-name">SS</span><span class="sim-reg-val">0000</span></div>
+              </div>
+            </div>
+
+            <div class="sim-flags">
+              <div class="sim-panel-header">FLAGS</div>
+              <div class="sim-flags-grid">
+                <div class="sim-flag" id="sflag-CF"><div class="sim-flag-name">CF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag" id="sflag-ZF"><div class="sim-flag-name">ZF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag" id="sflag-SF"><div class="sim-flag-name">SF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag" id="sflag-OF"><div class="sim-flag-name">OF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag" id="sflag-PF"><div class="sim-flag-name">PF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag" id="sflag-AF"><div class="sim-flag-name">AF</div><div class="sim-flag-val">0</div></div>
+                <div class="sim-flag on" id="sflag-IF"><div class="sim-flag-name">IF</div><div class="sim-flag-val">1</div></div>
+                <div class="sim-flag" id="sflag-DF"><div class="sim-flag-name">DF</div><div class="sim-flag-val">0</div></div>
+              </div>
+            </div>
+
+            <div class="sim-regs">
+              <div class="sim-panel-header">MACHINE CODE</div>
+              <div style="padding:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3)" id="machine-code">
+                B8 25 00<br>03 06 ?? ??<br>A3 ?? ??<br>B4 4C<br>CD 21
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEMORY -->
+      <div id="tab-memory" class="content-panel">
+        <div class="module-header">
+          <div class="module-tag">זיכרון · מפה</div>
+          <h2>מפת זיכרון וסגמנטציה</h2>
+          <p>מיעון 8086 מבוסס על <strong style="color:var(--cyan)">Segment:Offset</strong>. הכתובת הפיזית = Segment × 16 + Offset.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;margin-bottom:12px">חישוב כתובת</div>
+            <div style="font-size:14px;color:var(--text2);margin-bottom:12px">נוסחה: <span style="color:var(--green);font-family:'Share Tech Mono',monospace">PA = SEG × 10h + OFFSET</span></div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <input type="text" id="seg-input" placeholder="Segment" value="1000" style="background:var(--bg3);border:1px solid var(--border2);color:var(--green);padding:6px 10px;border-radius:4px;font-family:'Share Tech Mono',monospace;width:90px;direction:ltr">
+              <span style="color:var(--text3)">:</span>
+              <input type="text" id="off-input" placeholder="Offset" value="0200" style="background:var(--bg3);border:1px solid var(--border2);color:var(--green);padding:6px 10px;border-radius:4px;font-family:'Share Tech Mono',monospace;width:90px;direction:ltr">
+              <button onclick="calcAddr()" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--green);padding:6px 14px;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12px">חשב</button>
+            </div>
+            <div id="addr-result" style="font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--amber);padding:8px 0"></div>
+          </div>
+
+          <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;margin-bottom:12px">סגמנטים</div>
+            <div class="steps-list">
+              <div class="step-item done">
+                <div class="step-num">CS</div>
+                <div class="step-body"><div class="step-title">Code Segment</div><div class="step-desc">מכיל את הוראות התוכנית</div></div>
+              </div>
+              <div class="step-item done">
+                <div class="step-num">DS</div>
+                <div class="step-body"><div class="step-title">Data Segment</div><div class="step-desc">מכיל משתנים ונתונים</div></div>
+              </div>
+              <div class="step-item done">
+                <div class="step-num">SS</div>
+                <div class="step-body"><div class="step-title">Stack Segment</div><div class="step-desc">מחסנית לקריאות פרוצדורה</div></div>
+              </div>
+              <div class="step-item">
+                <div class="step-num">ES</div>
+                <div class="step-body"><div class="step-title">Extra Segment</div><div class="step-desc">סגמנט נוסף לשימוש כללי</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;margin-bottom:16px">מפת זיכרון (DS:0000 - DS:003F)</div>
+          <div class="memory-grid" id="memory-map"></div>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div id="tab-quiz" class="content-panel">
+        <div class="module-header">
+          <div class="module-tag">חידון · מודול 02</div>
+          <h2>בחן את עצמך</h2>
+          <p>5 שאלות על ארכיטקטורת 8086/8088</p>
+        </div>
+
+        <div class="quiz-container">
+          <div class="quiz-progress">
+            <div class="quiz-bar"><div class="quiz-bar-fill" id="quiz-bar" style="width:20%"></div></div>
+            <div class="quiz-count" id="quiz-count">שאלה 1 / 5</div>
+          </div>
+
+          <div id="question-area">
+            <div class="question-card" id="q-card">
+              <div class="question-type" id="q-type">שאלה רב-ברירה</div>
+              <div class="question-text" id="q-text">מה הגודל של אוטובוס הנתונים החיצוני של Intel 8086?</div>
+              <div class="options-grid" id="q-options"></div>
+            </div>
+          </div>
+
+          <div class="quiz-result" id="quiz-result">
+            <div class="result-score" id="result-score">4/5</div>
+            <div class="result-label">תוצאה מצוינת! אתה מבין את ארכיטקטורת 8086</div>
+            <button class="btn-retry" onclick="resetQuiz()">נסה שנית</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+// ===== SIDEBAR & MODULE CONTENT =====
+const moduleData = [
+  { tag:'מודול 01 · מבוא', title:'מבוא לשפת סף', desc:'מערכות מספרים, ייצוג נתונים, ASCII.',
+    cards:[
+      { icon:'🔢', ic:'icon-green', title:'מערכות מספרים', body:`<table class="asm-table"><tr><th>מערכת</th><th>בסיס</th><th>דוגמה</th></tr><tr><td class="td-inst">בינרי</td><td>2</td><td>1010b = 10</td></tr><tr><td class="td-inst">אוקטלי</td><td>8</td><td>12o = 10</td></tr><tr><td class="td-inst">הקסדצימלי</td><td>16</td><td>0Ah = 10</td></tr></table><div class="code-block"><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="num">1010b</span><br><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="num">0Ah</span><br><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="num">10</span>  <span class="cmt">; שלושתם זהים</span></div>` },
+      { icon:'±', ic:'icon-amber', title:'Signed / Unsigned', body:`<p><strong style="color:var(--green)">Unsigned Byte:</strong> 0 עד 255. <strong style="color:var(--amber)">Signed Byte:</strong> -128 עד 127 (Two's Complement).</p><div class="code-block"><span class="cmt">; Two's Complement: הפוך ביטים + 1</span><br><span class="cmt">; 00000001 → 11111110 + 1 = 11111111 = -1</span></div>` },
+      { icon:'A', ic:'icon-cyan', title:'ASCII', body:`<table class="asm-table"><tr><th>תו</th><th>עשרוני</th><th>הקס</th></tr><tr><td>'A'</td><td>65</td><td>41h</td></tr><tr><td>'a'</td><td>97</td><td>61h</td></tr><tr><td>'0'</td><td>48</td><td>30h</td></tr></table><div class="code-block"><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="str">'A'</span>  <span class="cmt">; AL = 41h</span></div>` }
+    ]
+  },
+  null,
+  { tag:'מודול 03 · הוראות', title:'הוראות בסיסיות', desc:'MOV, ADD, SUB, CMP, קפיצות — ליבת Assembly.',
+    cards:[
+      { icon:'↔', ic:'icon-green', title:'MOV ו-XCHG', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="num">1234h</span>  <span class="cmt">; AX = 1234h</span><br><span class="kw">MOV</span> <span class="reg">BX</span>, <span class="reg">AX</span>     <span class="cmt">; BX = AX</span><br><span class="kw">MOV</span> [<span class="num">1000h</span>], <span class="reg">AX</span> <span class="cmt">; שמור ב-DS:1000h</span><br><span class="kw">XCHG</span> <span class="reg">AX</span>, <span class="reg">BX</span>   <span class="cmt">; AX↔BX</span></div><div class="info-pills"><span class="pill pill-green">לא ניתן MOV מזיכרון לזיכרון ישירות</span></div>` },
+      { icon:'±', ic:'icon-amber', title:'ADD, SUB, CMP', body:`<div class="code-block"><span class="kw">ADD</span> <span class="reg">AX</span>, <span class="num">5</span>    <span class="cmt">; AX += 5</span><br><span class="kw">SUB</span> <span class="reg">BX</span>, <span class="reg">CX</span>  <span class="cmt">; BX -= CX</span><br><span class="kw">INC</span> <span class="reg">AX</span>       <span class="cmt">; AX++</span><br><span class="kw">DEC</span> <span class="reg">BX</span>       <span class="cmt">; BX--</span><br><span class="kw">NEG</span> <span class="reg">AX</span>       <span class="cmt">; AX = -AX</span><br><span class="kw">CMP</span> <span class="reg">AX</span>, <span class="num">10</span>  <span class="cmt">; מגדיר דגלים בלבד</span></div>` },
+      { icon:'↪', ic:'icon-cyan', title:'קפיצות', body:`<table class="asm-table"><tr><th>הוראה</th><th>תנאי</th></tr><tr><td class="td-inst">JMP</td><td>תמיד</td></tr><tr><td class="td-inst">JE/JZ</td><td>ZF=1</td></tr><tr><td class="td-inst">JNE/JNZ</td><td>ZF=0</td></tr><tr><td class="td-inst">JG</td><td>גדול (Signed)</td></tr><tr><td class="td-inst">JL</td><td>קטן (Signed)</td></tr><tr><td class="td-inst">JA</td><td>גדול (Unsigned)</td></tr><tr><td class="td-inst">JB</td><td>קטן (Unsigned)</td></tr></table>` }
+    ]
+  },
+  { tag:'מודול 04 · זיכרון', title:'סגמנטציה וזיכרון', desc:'מיעון Segment:Offset, כתובת פיזית וגישה לזיכרון.',
+    cards:[
+      { icon:'📐', ic:'icon-green', title:'Segment:Offset', body:`<div class="code-block"><span class="cmt">; PA = Segment × 10h + Offset</span><br><span class="cmt">; DS=1000h, BX=0200h</span><br><span class="cmt">; PA = 10000h + 0200h = 10200h</span></div><div class="info-pills"><span class="pill pill-amber">עד 1MB = 2²⁰ בתים</span></div>` },
+      { icon:'💾', ic:'icon-amber', title:'גישה ישירה ועקיפה', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="num">1000h</span>]   <span class="cmt">; Direct</span><br><span class="kw">MOV</span> <span class="reg">BX</span>, <span class="num">1000h</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>]     <span class="cmt">; Indirect</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>+<span class="num">2</span>]   <span class="cmt">; Indexed</span></div>` }
+    ]
+  },
+  { tag:'מודול 05 · מבנה', title:'מבנה שפת אסמבלר', desc:'DB/DW/DD, Directives, מבנה קובץ מקור.',
+    cards:[
+      { icon:'🗂', ic:'icon-green', title:'הגדרת נתונים', body:`<table class="asm-table"><tr><th>Directive</th><th>גודל</th><th>דוגמה</th></tr><tr><td class="td-inst">DB</td><td>1 Byte</td><td>NUM DB 25h</td></tr><tr><td class="td-inst">DW</td><td>2 Bytes</td><td>VAL DW 1234h</td></tr><tr><td class="td-inst">DD</td><td>4 Bytes</td><td>BIG DD 0</td></tr><tr><td class="td-inst">DUP</td><td>חזרה</td><td>DB 5 DUP(0)</td></tr></table>` },
+      { icon:'📋', ic:'icon-amber', title:'קובץ מלא', body:`<div class="code-block"><span class="kw">.MODEL</span> SMALL<br><span class="kw">.STACK</span> <span class="num">100h</span><br><span class="kw">.DATA</span><br>  <span class="reg">MSG</span> <span class="kw">DB</span> <span class="str">'Hello$'</span><br><span class="kw">.CODE</span><br><span class="lbl">START:</span><br>  <span class="kw">MOV</span> <span class="reg">AX</span>, @DATA<br>  <span class="kw">MOV</span> <span class="reg">DS</span>, <span class="reg">AX</span><br>  <span class="kw">MOV</span> <span class="reg">DX</span>, <span class="kw">OFFSET</span> <span class="reg">MSG</span><br>  <span class="kw">MOV</span> <span class="reg">AH</span>, <span class="num">09h</span><br>  <span class="kw">INT</span> <span class="num">21h</span><br>  <span class="kw">MOV</span> <span class="reg">AH</span>, <span class="num">4Ch</span><br>  <span class="kw">INT</span> <span class="num">21h</span><br><span class="kw">END</span> <span class="lbl">START</span></div>` }
+    ]
+  },
+  { tag:'מודול 06 · מתקדם', title:'הוראות מתקדמות', desc:'MUL, DIV, LEA, LOOP ועוד.',
+    cards:[
+      { icon:'✕', ic:'icon-green', title:'MUL ו-IMUL', body:`<div class="code-block"><span class="cmt">; Byte: AX = AL × src</span><br><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="num">5</span><br><span class="kw">MOV</span> <span class="reg">BL</span>, <span class="num">3</span><br><span class="kw">MUL</span> <span class="reg">BL</span>  <span class="cmt">; AX = 15</span><br><br><span class="cmt">; Word: DX:AX = AX × src</span><br><span class="kw">IMUL</span> <span class="reg">BX</span>  <span class="cmt">; Signed</span></div>` },
+      { icon:'÷', ic:'icon-amber', title:'DIV ו-IDIV', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="num">17</span><br><span class="kw">MOV</span> <span class="reg">BL</span>, <span class="num">5</span><br><span class="kw">DIV</span> <span class="reg">BL</span>  <span class="cmt">; AL=3, AH=2 (שארית)</span></div>` },
+      { icon:'🔁', ic:'icon-cyan', title:'LOOP', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">CX</span>, <span class="num">5</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="num">0</span><br><span class="lbl">L:</span> <span class="kw">ADD</span> <span class="reg">AX</span>, <span class="num">2</span><br><span class="kw">LOOP</span> <span class="lbl">L</span>  <span class="cmt">; AX = 10</span></div>` }
+    ]
+  },
+  { tag:'מודול 07 · דיבאג', title:'הרצה וניפוי שגיאות', desc:'MASM, Linker, DEBUG.',
+    cards:[
+      { icon:'⚙', ic:'icon-green', title:'תהליך הידור', body:`<div class="steps-list"><div class="step-item done"><div class="step-num">1</div><div class="step-body"><div class="step-title">כתיבה — .ASM</div><div class="step-desc">קובץ מקור בעורך טקסט</div></div></div><div class="step-item done"><div class="step-num">2</div><div class="step-body"><div class="step-title">MASM → .OBJ</div><div class="step-desc">קוד אובייקט</div></div></div><div class="step-item done"><div class="step-num">3</div><div class="step-body"><div class="step-title">LINK → .EXE</div><div class="step-desc">קובץ הרצה</div></div></div><div class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">DEBUG</div><div class="step-desc">ניפוי שגיאות</div></div></div></div>` },
+      { icon:'🐛', ic:'icon-amber', title:'פקודות DEBUG', body:`<table class="asm-table"><tr><th>פקודה</th><th>תיאור</th></tr><tr><td class="td-inst">R</td><td>הצג רגיסטרים</td></tr><tr><td class="td-inst">D</td><td>הצג זיכרון</td></tr><tr><td class="td-inst">U</td><td>Unassemble</td></tr><tr><td class="td-inst">T</td><td>Trace צעד אחד</td></tr><tr><td class="td-inst">G</td><td>הרץ עד כתובת</td></tr><tr><td class="td-inst">Q</td><td>יציאה</td></tr></table>` }
+    ]
+  },
+  { tag:'מודול 08 · מיעון', title:'שיטות מיעון', desc:'Immediate, Register, Direct, Indirect, Indexed.',
+    cards:[
+      { icon:'#', ic:'icon-green', title:'מיעון בסיסי', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="num">1234h</span>   <span class="cmt">; Immediate</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="reg">BX</span>      <span class="cmt">; Register</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="num">2000h</span>]  <span class="cmt">; Direct</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>]     <span class="cmt">; Indirect</span></div>` },
+      { icon:'[]', ic:'icon-amber', title:'מיעון אינדקסי', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>+<span class="num">4</span>]      <span class="cmt">; Base+disp</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>+<span class="reg">SI</span>]    <span class="cmt">; Base+Index</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, [<span class="reg">BX</span>+<span class="reg">SI</span>+<span class="num">2</span>]  <span class="cmt">; Base+Index+disp</span></div>` }
+    ]
+  },
+  { tag:'מודול 09 · מחסנית', title:'פרוצדורות ומחסנית', desc:'PUSH/POP, CALL/RET, INT 21h.',
+    cards:[
+      { icon:'📚', ic:'icon-green', title:'PUSH ו-POP', body:`<div class="code-block"><span class="kw">PUSH</span> <span class="reg">AX</span>  <span class="cmt">; SP-=2, [SP]=AX</span><br><span class="kw">PUSH</span> <span class="reg">BX</span><br><span class="kw">POP</span>  <span class="reg">BX</span>  <span class="cmt">; BX=[SP], SP+=2</span><br><span class="kw">POP</span>  <span class="reg">AX</span></div><div class="info-pills"><span class="pill pill-green">LIFO — Last In, First Out</span></div>` },
+      { icon:'📞', ic:'icon-amber', title:'CALL ו-RET', body:`<div class="code-block"><span class="kw">CALL</span> <span class="lbl">MY_PROC</span><br><br><span class="lbl">MY_PROC</span> <span class="kw">PROC</span><br>  <span class="kw">PUSH</span> <span class="reg">AX</span><br>  <span class="cmt">; ... קוד ...</span><br>  <span class="kw">POP</span> <span class="reg">AX</span><br>  <span class="kw">RET</span><br><span class="lbl">MY_PROC</span> <span class="kw">ENDP</span></div>` },
+      { icon:'💻', ic:'icon-cyan', title:'INT 21h', body:`<table class="asm-table"><tr><th>AH</th><th>פונקציה</th></tr><tr><td class="td-inst">01h</td><td>קרא תו → AL</td></tr><tr><td class="td-inst">02h</td><td>הדפס תו (DL)</td></tr><tr><td class="td-inst">09h</td><td>הדפס מחרוזת (DX)</td></tr><tr><td class="td-inst">4Ch</td><td>יציאה</td></tr></table>` }
+    ]
+  },
+  { tag:'מודול 10 · לוגי', title:'פעולות לוגיות', desc:'AND, OR, XOR, NOT, הזזות וסיבובים.',
+    cards:[
+      { icon:'⊕', ic:'icon-green', title:'AND, OR, XOR, NOT', body:`<div class="code-block"><span class="kw">AND</span> <span class="reg">AX</span>, <span class="num">0F0Fh</span>  <span class="cmt">; מסכה</span><br><span class="kw">OR</span>  <span class="reg">AX</span>, <span class="num">0001h</span>  <span class="cmt">; הדלק ביט 0</span><br><span class="kw">XOR</span> <span class="reg">AX</span>, <span class="reg">AX</span>     <span class="cmt">; AX=0</span><br><span class="kw">NOT</span> <span class="reg">AX</span>         <span class="cmt">; הפוך הכל</span><br><span class="kw">TEST</span> <span class="reg">AX</span>, <span class="num">1</span>     <span class="cmt">; בדוק ביט</span></div>` },
+      { icon:'⇄', ic:'icon-amber', title:'SHL, SHR, ROL, ROR', body:`<div class="code-block"><span class="kw">SHL</span> <span class="reg">AX</span>, <span class="num">1</span>  <span class="cmt">; AX × 2</span><br><span class="kw">SHR</span> <span class="reg">AX</span>, <span class="num">1</span>  <span class="cmt">; AX ÷ 2</span><br><span class="kw">SAR</span> <span class="reg">AX</span>, <span class="num">1</span>  <span class="cmt">; ÷2 עם שמירת סימן</span><br><span class="kw">ROL</span> <span class="reg">AL</span>, <span class="num">1</span>  <span class="cmt">; סיבוב שמאלה</span><br><span class="kw">ROR</span> <span class="reg">AL</span>, <span class="num">1</span>  <span class="cmt">; סיבוב ימינה</span></div>` }
+    ]
+  },
+  { tag:'מודול 11 · מתקדם', title:'תכנות מתקדם', desc:'EQU, STRUC, RECORD, אופרטורים.',
+    cards:[
+      { icon:'≡', ic:'icon-green', title:'EQU ואופרטורים', body:`<div class="code-block"><span class="reg">MAX</span> <span class="kw">EQU</span> <span class="num">100</span><br><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="kw">OFFSET</span> <span class="reg">MSG</span><br><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="kw">LOW</span> <span class="num">1234h</span>   <span class="cmt">; = 34h</span><br><span class="kw">MOV</span> <span class="reg">AL</span>, <span class="kw">HIGH</span> <span class="num">1234h</span>  <span class="cmt">; = 12h</span></div>` },
+      { icon:'🗃', ic:'icon-amber', title:'STRUC', body:`<div class="code-block"><span class="lbl">STUDENT</span> <span class="kw">STRUC</span><br>  <span class="reg">ID</span>    <span class="kw">DW</span> <span class="num">?</span><br>  <span class="reg">GRADE</span> <span class="kw">DB</span> <span class="num">?</span><br><span class="lbl">STUDENT</span> <span class="kw">ENDS</span><br><br><span class="reg">S1</span> <span class="lbl">STUDENT</span> &lt;100, 95&gt;<br><span class="kw">MOV</span> <span class="reg">AX</span>, <span class="reg">S1</span>.<span class="reg">ID</span></div>` }
+    ]
+  },
+  { tag:'מודול 12 · מחרוזות', title:'פעולות על מחרוזות', desc:'MOVS, LODS, STOS, SCAS, CMPS, REP.',
+    cards:[
+      { icon:'📝', ic:'icon-green', title:'הוראות מחרוזת', body:`<table class="asm-table"><tr><th>הוראה</th><th>פעולה</th></tr><tr><td class="td-inst">MOVSB/W</td><td>העתק DS:SI → ES:DI</td></tr><tr><td class="td-inst">LODSB/W</td><td>טען DS:SI → AL/AX</td></tr><tr><td class="td-inst">STOSB/W</td><td>שמור AL/AX → ES:DI</td></tr><tr><td class="td-inst">SCASB/W</td><td>השווה AL עם ES:DI</td></tr><tr><td class="td-inst">CMPSB/W</td><td>השווה DS:SI עם ES:DI</td></tr></table>` },
+      { icon:'🔄', ic:'icon-amber', title:'REP, REPE, REPNE', body:`<div class="code-block"><span class="kw">MOV</span> <span class="reg">CX</span>, <span class="num">100</span><br><span class="kw">REP</span> <span class="kw">MOVSB</span>   <span class="cmt">; העתק 100 בתים</span><br><br><span class="kw">REPE</span> <span class="kw">CMPSB</span>   <span class="cmt">; השווה עד אי-שוויון</span><br><span class="kw">REPNE</span> <span class="kw">SCASB</span>  <span class="cmt">; חפש תו ב-AL</span><br><br><span class="kw">XOR</span> <span class="reg">AL</span>, <span class="reg">AL</span><br><span class="kw">MOV</span> <span class="reg">CX</span>, <span class="num">200</span><br><span class="kw">REP</span> <span class="kw">STOSB</span>   <span class="cmt">; אפס 200 בתים</span></div>` }
+    ]
+  }
+];
+
+function buildModuleContent(idx) {
+  const data = moduleData[idx];
+  if (!data) return;
+  document.querySelector('.module-tag').textContent = data.tag;
+  document.querySelector('.module-header h2').textContent = data.title;
+  document.querySelector('.module-header p').textContent = data.desc;
+  document.querySelector('.lesson-cards').innerHTML = data.cards.map((c,i) => `
+    <div class="lesson-card ${i===0?'open':''}">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="card-icon ${c.ic}">${c.icon}</div>
+        <div class="card-title">${c.title}</div>
+        <div class="card-arrow">▼</div>
+      </div>
+      <div class="card-body">${c.body}</div>
+    </div>`).join('');
+}
+
+// Store original module 2 HTML
+let originalTheory = null;
+window.addEventListener('DOMContentLoaded', () => {
+  originalTheory = document.querySelector('.lesson-cards').innerHTML;
+});
+
+function selectModule(idx) {
+  document.querySelectorAll('.module-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  // Switch to theory tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[0].classList.add('active');
+  document.getElementById('tab-theory').classList.add('active');
+
+  if (idx === 1) {
+    // Restore module 2 original content
+    document.querySelector('.module-tag').textContent = 'מודול 02 · ארכיטקטורה';
+    document.querySelector('.module-header h2').textContent = 'ארכיטקטורת Intel 8086/8088';
+    document.querySelector('.module-header p').textContent = 'הבנת מבנה המעבד, יחידות הפנימיות, האוגרים והאוטובוסים — הבסיס להבנת כל הוראת Assembly.';
+    if (originalTheory) document.querySelector('.lesson-cards').innerHTML = originalTheory;
+  } else {
+    buildModuleContent(idx);
+  }
+}
+
+// ===== CARDS =====
+function toggleCard(header) {
+  const card = header.closest('.lesson-card');
+  card.classList.toggle('open');
+}
+
+// ===== REG INFO =====
+const regInfo = {
+  AX: 'AX (Accumulator): שימוש עיקרי בחישובים, קלט/פלט. AH = חלק גבוה, AL = חלק נמוך.',
+  BX: 'BX (Base): שימוש לבסיס מיעון עקיף וכמצביע לנתונים. BH, BL.',
+  CX: 'CX (Counter): משמש מונה בלולאות LOOP ובפעולות מחרוזת. CH, CL.',
+  DX: 'DX (Data): שימוש עם AX בפעולות MUL/DIV ובקלט/פלט (IN, OUT). DH, DL.',
+  SI: 'SI (Source Index): מצביע מקור בפעולות מחרוזת (MOVS, LODS וכו\').',
+  DI: 'DI (Destination Index): מצביע יעד בפעולות מחרוזת.',
+  SP: 'SP (Stack Pointer): מצביע על ראש המחסנית. מתעדכן אוטומטית ב-PUSH/POP.',
+  BP: 'BP (Base Pointer): גישה לפרמטרים ומשתנים מקומיים על גבי המחסנית.'
+};
+function showRegInfo(reg) {
+  const el = document.getElementById('reg-info-text');
+  el.textContent = regInfo[reg] || '';
+  el.style.display = 'block';
+  document.querySelectorAll('.reg-box').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ===== FLAGS TOGGLE =====
+function toggleFlag(box, name) {
+  box.classList.toggle('set');
+  const val = box.querySelector('.flag-val');
+  val.textContent = box.classList.contains('set') ? '1' : '0';
+}
+
+// ===== SIMULATOR =====
+let simState = {
+  AX:0, BX:0, CX:0, DX:0, SI:0, DI:0, SP:0xFFFF, BP:0,
+  IP:0, DS:0, CS:0, SS:0,
+  CF:0, ZF:0, SF:0, OF:0, PF:0, AF:0, IF:1, DF:0,
+  step: 0
+};
+
+const simProgram = [
+  { ip: '0000', desc: 'MOV AX, 0025h', fn: s => { markChanged('AX', s.AX, 0x25); s.AX=0x25; s.IP=0x3; updateFlags(s,0x25); } },
+  { ip: '0003', desc: 'ADD AX, 0013h', fn: s => { const r=s.AX+0x13; markChanged('AX', s.AX, r&0xFFFF); s.AX=r&0xFFFF; s.ZF=s.AX===0?1:0; s.SF=(s.AX&0x8000)?1:0; s.CF=r>0xFFFF?1:0; s.IP=0x6; updateFlags(s,s.AX); } },
+  { ip: '0006', desc: 'MOV DS:[SUM], AX', fn: s => { s.IP=0x9; addOutput('info', '> MEM[SUM] = '+hex(s.AX)); } },
+  { ip: '0009', desc: 'MOV AH, 4Ch', fn: s => { markChanged('AX', s.AX, (s.AX&0xFF)|0x4C00); s.AX=(s.AX&0xFF)|0x4C00; s.IP=0xB; } },
+  { ip: '000B', desc: 'INT 21h', fn: s => { s.IP=0xD; addOutput('ok', '> [INT 21h] EXIT – תוכנית הסתיימה בהצלחה'); } }
+];
+
+function hex(n, digits=4) {
+  return n.toString(16).toUpperCase().padStart(digits,'0') + 'h';
+}
+
+function updateRegDisplay(reg, val) {
+  const el = document.getElementById('sreg-'+reg);
+  if (el) el.querySelector('.sim-reg-val').textContent = val.toString(16).toUpperCase().padStart(4,'0');
+}
+
+function markChanged(reg, oldVal, newVal) {
+  if (oldVal === newVal) return;
+  const el = document.getElementById('sreg-'+reg);
+  if (!el) return;
+  el.classList.remove('changed');
+  void el.offsetWidth;
+  el.classList.add('changed');
+  el.querySelector('.sim-reg-val').textContent = newVal.toString(16).toUpperCase().padStart(4,'0');
+  setTimeout(() => el.classList.remove('changed'), 1500);
+}
+
+function updateFlags(s, result) {
+  const flags = ['CF','ZF','SF','OF','PF','AF','IF','DF'];
+  flags.forEach(f => {
+    const el = document.getElementById('sflag-'+f);
+    if (!el) return;
+    const val = s[f] || 0;
+    el.classList.toggle('on', val===1);
+    el.querySelector('.sim-flag-val').textContent = val;
+  });
+}
+
+function addOutput(type, text) {
+  const out = document.getElementById('sim-output');
+  const line = document.createElement('div');
+  line.className = 'out-line ' + type;
+  line.textContent = text;
+  out.appendChild(line);
+  out.scrollTop = out.scrollHeight;
+}
+
+function resetSim() {
+  simState = { AX:0, BX:0, CX:0, DX:0, SI:0, DI:0, SP:0xFFFF, BP:0, IP:0, DS:0, CS:0, SS:0, CF:0, ZF:0, SF:0, OF:0, PF:0, AF:0, IF:1, DF:0, step:0 };
+  ['AX','BX','CX','DX','SI','DI','SP','BP','IP','DS','CS','SS'].forEach(r => updateRegDisplay(r, simState[r]||0));
+  updateFlags(simState, 0);
+  document.getElementById('sim-output').innerHTML = '<div class="out-line info">&gt; אותחל. מוכן להרצה.</div>';
+  simState.step = 0;
+}
+
+function stepSim() {
+  if (simState.step >= simProgram.length) {
+    addOutput('info','> הגעת לסוף התוכנית.'); return;
+  }
+  const inst = simProgram[simState.step];
+  addOutput('ok', '> [' + inst.ip + '] ' + inst.desc);
+  inst.fn(simState);
+  updateRegDisplay('IP', simState.IP);
+  updateRegDisplay('AX', simState.AX);
+  updateFlags(simState, simState.AX);
+  simState.step++;
+}
+
+function runSim() {
+  resetSim();
+  let i = 0;
+  const run = () => {
+    if (i < simProgram.length) {
+      stepSim();
+      i++;
+      setTimeout(run, 350);
+    }
+  };
+  run();
+}
+
+// ===== MEMORY MAP =====
+function initMemory() {
+  const grid = document.getElementById('memory-map');
+  if (!grid) return;
+  // Sample data
+  const data = [0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00,
+                0xFF, 0xFF, 0x00, 0x00, 0xB8, 0x00, 0x00, 0x00,
+                0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+  for (let r = 0; r < 4; r++) {
+    const addrCell = document.createElement('div');
+    addrCell.className = 'mem-addr';
+    addrCell.textContent = (r*8).toString(16).toUpperCase().padStart(4,'0') + ':';
+    grid.appendChild(addrCell);
+    for (let c = 0; c < 8; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'mem-cell';
+      const val = data[r*8+c] || 0;
+      cell.textContent = val.toString(16).toUpperCase().padStart(2,'0');
+      cell.title = 'Addr: ' + ((r*8+c).toString(16).toUpperCase()) + 'h  Val: ' + val;
+      cell.onclick = function() {
+        document.querySelectorAll('.mem-cell').forEach(x=>x.classList.remove('highlighted'));
+        this.classList.add('highlighted');
+      };
+      grid.appendChild(cell);
+    }
+  }
+}
+
+// ===== ADDRESS CALC =====
+function calcAddr() {
+  const seg = parseInt(document.getElementById('seg-input').value, 16);
+  const off = parseInt(document.getElementById('off-input').value, 16);
+  if (isNaN(seg) || isNaN(off)) {
+    document.getElementById('addr-result').textContent = 'ערך לא תקין';
+    return;
+  }
+  const pa = (seg * 0x10 + off) & 0xFFFFF;
+  document.getElementById('addr-result').textContent =
+    `כתובת פיזית: ${pa.toString(16).toUpperCase().padStart(5,'0')}h = ${pa} (עשרוני)`;
+}
+
+// ===== QUIZ =====
+const questions = [
+  {
+    type: 'שאלה רב-ברירה',
+    text: 'מה הגודל של אוטובוס הנתונים החיצוני של Intel 8086?',
+    options: ['8-bit', '16-bit', '32-bit', '20-bit'],
+    correct: 1
+  },
+  {
+    type: 'שאלה על אוגרים',
+    text: 'איזה אוגר משמש בעיקר כמונה בלולאות LOOP?',
+    options: ['AX', 'BX', 'CX', 'DX'],
+    correct: 2
+  },
+  {
+    type: 'שאלה על דגלים',
+    text: 'איזה דגל מוגדר ל-1 כאשר תוצאת פעולה חשבון שווה לאפס?',
+    options: ['CF', 'SF', 'ZF', 'OF'],
+    correct: 2
+  },
+  {
+    type: 'שאלה על ארכיטקטורה',
+    text: 'מה עושה ה-BIU (Bus Interface Unit)?',
+    options: [
+      'מבצע פעולות חשבון',
+      'מביא הוראות מהזיכרון ומנהל אוטובוסים',
+      'שולט על הפסיקות',
+      'מנהל את המחסנית'
+    ],
+    correct: 1
+  },
+  {
+    type: 'שאלה השוואה',
+    text: 'מה ההבדל העיקרי בין 8086 ל-8088?',
+    options: [
+      'ל-8088 יש יותר אוגרים',
+      'ל-8086 יש כתובת פיזית גדולה יותר',
+      'ל-8088 אוטובוס נתונים חיצוני של 8-bit בלבד',
+      'אין הבדל'
+    ],
+    correct: 2
+  }
+];
+
+let qIndex = 0, score = 0, answered = false;
+
+function renderQuestion() {
+  const q = questions[qIndex];
+  document.getElementById('q-type').textContent = q.type;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('quiz-count').textContent = `שאלה ${qIndex+1} / ${questions.length}`;
+  document.getElementById('quiz-bar').style.width = ((qIndex+1)/questions.length*100)+'%';
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  const letters = ['א','ב','ג','ד'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+    btn.onclick = () => answerQ(i, btn);
+    opts.appendChild(btn);
+  });
+  answered = false;
+}
+
+function answerQ(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIndex];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((b, i) => {
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+  });
+  if (idx === q.correct) score++;
+  setTimeout(() => {
+    qIndex++;
+    if (qIndex >= questions.length) showResult();
+    else renderQuestion();
+  }, 1200);
+}
+
+function showResult() {
+  document.getElementById('question-area').style.display = 'none';
+  const result = document.getElementById('quiz-result');
+  result.style.display = 'block';
+  document.getElementById('result-score').textContent = score + '/' + questions.length;
+  result.querySelector('.result-label').textContent = score >= 4 ? 'מצוין! אתה מבין את ארכיטקטורת 8086 היטב 🎯' : score >= 3 ? 'לא רע! כדאי לחזור על החומר ולנסות שוב.' : 'המשך ללמוד — עיין שוב בחומר של המודול.';
+}
+
+function resetQuiz() {
+  qIndex = 0; score = 0;
+  document.getElementById('question-area').style.display = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuestion();
+}
+
+// ===== INIT =====
+renderQuestion();
+initMemory();
+</script>
+</body>
+</html>
